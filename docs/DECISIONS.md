@@ -282,3 +282,64 @@ require a client to exist — running the diagnostic unpaid on a real company is
 Nor can it tell a revision that records something real from one that records nothing. That
 limit is stated in the gate rather than hidden, on the same principle as the "read this
 yourself" footers.
+
+## ADR-0010 — Three phase gates could certify work that never happened, and what replaces them
+
+**Date:** 2026-09-29 · **Status:** accepted
+
+**Context.** The gates for phases 3, 4 and 5 each counted the presence of evidence in a file as
+proof that the event they describe had occurred. Measured on 2026-09-29, against trees planted
+with nothing but placeholder text:
+
+| gate | what it was given | what it answered |
+|---|---|---|
+| phase 3 | dated notes containing the words signed, rejected and ignored | "three conversations logged with stated outcomes" |
+| phase 4 | three empty numbered directories, a method file whose three dated revisions all record that nothing changed, and a file whose entire content is one uppercase word | "three engagements delivered, method changed each time" |
+| phase 5 | `DELIVERER: TBD` and a single bullet reading "placeholder defect" | "handoff delivered, defects filed" |
+
+All three exited 0. The uniform cause is that a pattern match on a document counts prose about
+an event, not the event. A count of dated lines is not a count of conversations; a match on a
+word that also appears in prose is not a match on an outcome; a list of directories is a count of
+folders. In each case the gate checked something adjacent to its acceptance criterion and reported
+it as the criterion itself.
+
+A second defect is common to all three. Each printed its not-yet verdict the moment a file was
+absent, never reading a date, while its own header described a window check. That makes the phase
+a property of the filesystem rather than of the calendar: a file written early turns a gate red
+for the wrong reason, and a file never written keeps it green forever.
+
+**Decision.** Rebuild each of the three from the words of its acceptance criterion in
+`docs/BUILD-PLAN.md`, so that a line which satisfies the check is a claim in a fixed shape rather
+than a description in prose. And decide not-yet from a date table, not from a missing file.
+
+Concretely: one record per event, with the fields the criterion names and an outcome vocabulary
+taken from the criterion itself, so that stating the outcome is structural rather than optional. A
+counted total is replaced by a per-record requirement where the criterion says "for each". A
+claim is cross-checked against the document it claims to summarise, so a record asserting a number
+of filed items fails when the document holds fewer. And where the criterion turns on a person's
+identity or absence of help, that becomes a field with a fixed value rather than an assumption.
+
+**Consequence.** Every one of the three now fails on the same plant its predecessor passed, with a
+per-line reason, and passes on real records. Their not-yet answers come from dates, so a phase
+becomes decidable on the day the plan says it does and not before. The gates stay in the private
+toolkit under ADR-0000; only the acceptance criteria they are rebuilt from are public, and they
+are already in `docs/BUILD-PLAN.md`.
+
+The honest cost: three gates that were permanently green are now permanently red, because phases
+3, 4 and 5 have genuinely not started. That is the correct state and it is stated here so a later
+reader does not mistake a red gate for a regression. The phase 1 and 2 gates are unaffected, and
+phase 2 is genuinely complete.
+
+**Deliberately left alone.** The phase 1 gate's contract check, which already delegates to the
+validator and already fails rather than deferring. The phase 2 gate, because that phase is
+finished and finishing a phase early is legitimate rather than suspicious. The credential scan,
+which keeps full tree coverage on purpose, since a credential control that can miss is worse than
+one that is slow.
+
+**The limit, stated rather than hidden.** No gate can detect a deliberate lie. A record asserting a
+signature that never happened defeats every version of the check, including these. What the rebuilt
+gates can do is refuse to certify a claim that is cheap to make by accident, which is the failure
+that was actually happening. On the phase 5 gate that limit is sharper still: a handoff record can
+be typed in under a minute, so the only real evidence that a second person delivered an engagement
+is that the founder did not write the record. The gate says so in its own output, and instructs
+the reader to ask the deliverer.
