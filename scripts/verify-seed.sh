@@ -25,6 +25,29 @@ note() { printf '  %-8s %s\n' "$1" "$2"; [[ "$1" == FAIL ]] && fail=1; }
 ok()   { note PASS "$1"; }
 bad()  { note FAIL "$1"; }
 
+# A vocabulary ban has to be able to live in the documents that *state* the ban,
+# otherwise writing down the rule fails the rule. So a line only counts as a
+# violation when the banned term appears without a prohibition cue on the same
+# line. "No passive income framing" is the ban; "revenue is passive income" is
+# the breach.
+negation='(^|[^a-z])(no|not|never|without|zero|deliberate|ban|exclud|avoid|instead of|rather than|forbid|reject|drop|kill)'
+count_affirmative() {
+  local pattern="$1" file="$2" n
+  n=$(grep -inE "$pattern" "$file" 2>/dev/null \
+      | grep -viE "$negation" \
+      | wc -l || true)
+  printf '%s' "$n"
+}
+count_affirmative_tree() {
+  local pattern="$1"
+  # -i matters: a banned vendor reintroduced as "Amplitude" or "Make.com" must still
+  # fail, and a case-sensitive scan lets the capital-A spelling through.
+  grep -rInEi "$pattern" . --exclude-dir=.git 2>/dev/null \
+    | grep -v '^\./scripts/verify-seed\.sh:' \
+    | grep -viE "$negation" \
+    | wc -l || true
+}
+
 echo "seed verify: $(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
 echo
 
@@ -72,7 +95,7 @@ if [[ -s "$mono" ]]; then
   else bad "no '**Break-even:**' line in $mono"; fi
   if grep -qE '^\*\*Pricing hypothesis:\*\* .+' "$mono"; then ok "pricing hypothesis stated"
   else bad "no '**Pricing hypothesis:**' line in $mono"; fi
-  crypto=$(grep -icE 'revenue (is|comes from) (token|emission|crypto)|passive income' "$mono" || true)
+  crypto=$(count_affirmative '(revenue (is|comes from) (token|emission|crypto))|(passive income)' "$mono")
   if [[ "$crypto" -eq 0 ]]; then ok "no token/passive-income revenue claims"
   else bad "$crypto lines promise token or passive-income revenue"; fi
 else
@@ -86,12 +109,12 @@ if git grep -nIE '(sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,})' -
 else
   ok "no credential-shaped strings"
 fi
-todos=$(git grep -nIE '\b(TODO|FIXME|XXX)\b' -- . 2>/dev/null | grep -v 'scripts/verify-seed.sh' | wc -l || true)
+todos=$(git grep -nIE '\b(TODO|FIXME|XXX)\b' -- . 2>/dev/null | grep -v 'scripts/verify-seed.sh' | grep -viE "$negation" | wc -l || true)
 if [[ "$todos" -eq 0 ]]; then ok "no TODO/FIXME markers"
 else bad "$todos TODO/FIXME markers (finish or file an issue)"; fi
-vendor=$(grep -rIlE 'notion\.so|amplitude|mixpanel|make\.com|zapier\.com' -- . --exclude-dir=.git 2>/dev/null | wc -l || true)
+vendor=$(count_affirmative_tree 'notion\.so|amplitude|mixpanel|make\.com|zapier\.com')
 if [[ "$vendor" -eq 0 ]]; then ok "no off-the-shelf SaaS backlog filler"
-else bad "$vendor files reference Notion/Amplitude/Mixpanel/Make/Zapier"; fi
+else bad "$vendor lines reference Notion/Amplitude/Mixpanel/Make/Zapier"; fi
 
 echo
 if [[ "$fail" -eq 0 ]]; then
