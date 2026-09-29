@@ -81,6 +81,22 @@ if [[ -s "$plan" ]]; then
   prose=$(grep -E '^\*\*Verify:\*\* ' "$plan" | grep -vcE '`[a-z0-9_./-]+.*`' || true)
   if [[ "$prose" -eq 0 ]]; then ok "verify commands are commands, not prose"
   else bad "$prose verify lines contain no backticked command"; fi
+
+  # A verify command that cannot fail is not a verify command. `bash -c "echo ..."` exits 0
+  # forever and would satisfy a backtick check forever, which is how a plan gets to look
+  # verified while nothing is ever tested. Reject the tautologies.
+  taut=$(grep -E '^\*\*Verify:\*\* ' "$plan" \
+    | grep -icE '`[^`]*(echo|true|:>|printf)[^`]*`|[[:space:]]true[[:space:]]*`|(exit[[:space:]]+0)' || true)
+  if [[ "$taut" -eq 0 ]]; then ok "no tautological verify commands"
+  else bad "$taut verify lines run a command that always exits 0"; fi
+
+  # Every verify command must actually exist in the tree, or reference an obvious external
+  # binary. A script that is named but absent is an honest "not built yet"; a script named
+  # with a typo is a phase that can never pass.
+  missing=$(grep -oE '`bash scripts/[A-Za-z0-9._-]+\.sh' "$plan" | sed 's/`bash //' | sort -u \
+    | while read -r s; do [[ -f "$s" ]] || printf '%s ' "$s"; done)
+  if [[ -z "$missing" ]]; then ok "every referenced verify script exists or is not yet written"
+  else note INFO "verify scripts not yet written (expected pre-build): $missing"; fi
 else
   bad "$plan unreadable, skipping phase checks"
 fi
