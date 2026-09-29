@@ -1,0 +1,18 @@
+# Ignore the noise: the deliverable is Markdown, deliberately.
+.env
+.env.*
+*.pem
+*.key
+!.gitignore
+
+# Never commit client material with identifying detail. Slugs only.
+diagnostics/*-client-confidential*
+diagnostics/*-nda*
+
+# Nothing here is a build artefact, but keep the tree honest if that changes.
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+.idea/
+.vscode/
