@@ -1,3 +1,5 @@
+> **Development home:** https://github.com/BoozeLee/mycroft — public, CI-enabled (seed verify gate + docs checks on every push/PR). This org copy is the private archive.
+
 # Mycroft
 
 > *Mycroft Holmes: Sherlock's brother, who sees everything and says almost nothing. He is consulted on a slice of a case, gives his opinion, and withdraws.*
