@@ -236,3 +236,49 @@ Both are recorded in issue #6.
 **Still open.** This lane's `verify-seed.sh` has now diverged from `221b` and `hansom-cab` twice
 over, and both carry this defect. Propagation stays deliberately unbundled: siblings are changed
 one at a time, after this change has been reviewed.
+
+## ADR-0009 — K0: the first real business must change the method
+
+**Date:** 2026-09-29 · **Status:** accepted
+
+**Context.** The lane had six kill criteria and not one of them could fire before a client
+conversation happened. K1 is week 8, K2 needs two engagements, K3 needs five, K4 needs one
+engagement, K5 is quarter 7, K6 is month 12. Every one of them sits downstream of a sale or a
+delivery. That left a hole of the same shape as the one this repo had already found twice: a
+check that cannot fail is not a check.
+
+The hole is not hypothetical. `diagnostics/method.md` is written from the CLI contract and the
+scaffold, and both are products of this repo. Writing it is cheap. Running the diagnostic on a
+real company is the only thing that makes it a method, because a method is a procedure that
+survived contact with something that objected. The build plan already says this in one line —
+"the only phase that cannot be faked" — and then nothing enforced it. As of 2026-09-29 the file
+did not exist and the week-3 deadline was eight days past nothing at all.
+
+**Decision.** Add K0, firing at week 3 (2026-10-20): if the unpaid Phase 1 diagnostic produced
+no dated revision to `diagnostics/method.md`, the method is a template, not a method. Write
+down what the first real business actually changed, or close the lane. Do not carry it forward
+unchanged and call it experience.
+
+K0 sits above K1 deliberately. It is the only criterion in the table that can be decided
+without a single client conversation, which makes it the only one that can be evaded by
+inaction. K1 punishes a market that does not answer. K0 punishes a method that was never
+tested, and waiting for the market to answer is a way of not running it.
+
+**Consequence.** The closing line of `VISION.md` no longer says two criteria will fire; it now says
+three, and it now says why the earliest one is the one about the founder's own work. Phase 1
+remains blocked on naming a real company, so K0 is currently on a clock with no input
+available to it — that is the honest state, and issue #4 is the thing that has to change.
+
+**The check.** It lives in `scripts/verify-method.sh` in the private toolkit, not in this repo,
+because that is where the phase gates are and this repo carries no code (ADR-0000). The check
+is driven by the calendar rather than by a file being absent: before 2026-10-20 it reports that
+K0 is not yet due, and on and after that date a missing dated revision is a failure. That
+distinction matters, because three sibling gates infer "not yet" from a file not existing,
+which makes the not-yet state a property of the filesystem rather than of the date. Rewriting
+those three is ADR-0010's job, not this one's.
+
+**Not in scope.** K0 does not judge whether the first diagnostic was any good, and it does not
+require a client to exist — running the diagnostic unpaid on a real company is the whole test.
+Nor can it tell a revision that records something real from one that records nothing. That
+limit is stated in the gate rather than hidden, on the same principle as the "read this
+yourself" footers.
