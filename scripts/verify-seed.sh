@@ -42,8 +42,21 @@ count_affirmative_tree() {
   local pattern="$1"
   # -i matters: a banned vendor reintroduced as "Amplitude" or "Make.com" must still
   # fail, and a case-sensitive scan lets the capital-A spelling through.
-  grep -rInEi "$pattern" . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist 2>/dev/null \
-    | grep -v '^\./scripts/verify-seed\.sh:' \
+  #
+  # -h drops the ./path:lineno: prefix. That prefix used to reach the negation test,
+  # so a line under a path containing a cue exempted itself: every path under
+  # node_modules/ contains "no", and the vendor scan had therefore never once looked
+  # inside node_modules. The self-exclusion moves from a path grep to --exclude,
+  # which matches the basename, so the path is gone from the pipeline rather than
+  # filtered out of it later.
+  #
+  # The sed strips the banned term before the negation test. "notion.so" opens with
+  # "no", which the negation pattern read as a prohibition, so the vendor ban's
+  # primary term could not fail on any line at any path even with -h in place. A cue
+  # inside the word being banned is not a cue about that word. The delimiter is %
+  # and the pattern must not contain one; it holds a list of vendor names.
+  grep -rInEih "$pattern" . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist --exclude='verify-seed.sh' 2>/dev/null \
+    | sed -E "s%${pattern}%%gI" \
     | grep -viE "$negation" \
     | wc -l || true
 }
@@ -142,7 +155,12 @@ if grep -rIE '(sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,})' . --e
 else
   ok "no credential-shaped strings"
 fi
-todos=$(grep -rInE '\b(TODO|FIXME|XXX)\b' . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist 2>/dev/null | grep -v 'scripts/verify-seed\.sh' | grep -viE "$negation" | wc -l || true)
+# -h and --exclude here for the same reason as count_affirmative_tree: the
+# ./path: prefix used to reach the negation test, so a file under a directory whose
+# name contains a cue exempted itself from this scan. No sed strip is needed here,
+# because none of the trigger words contains a cue, so there is no term for a line
+# to self-exempt with.
+todos=$(grep -rInEih '\b(TODO|FIXME|XXX)\b' . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist --exclude='verify-seed.sh' 2>/dev/null | grep -viE "$negation" | wc -l || true)
 if [[ "$todos" -eq 0 ]]; then ok "no TODO/FIXME markers"
 else bad "$todos TODO/FIXME markers (finish or file an issue)"; fi
 vendor=$(count_affirmative_tree 'notion\.so|amplitude|mixpanel|make\.com|zapier\.com')

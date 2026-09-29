@@ -184,6 +184,55 @@ time, after this change has been reviewed.
 
 Both defects are recorded rather than fixed here. The accidental `node_modules` exemption is
 now explicit and no longer depends on a regex coincidence, which is the part this change
-actually buys. The self-exempting `notion.so` term is a separate change to the filter's
-semantics and needs its own decision; until then the vendor ban's primary term is decorative,
-in this lane and in both siblings.
+actually buys. The self-exempting vendor term was a separate change to the filter's semantics and
+got its own decision, **ADR-0008**, merged after this one. Until it landed, the vendor ban's
+primary term was decorative, in this lane and in both siblings.
+
+## ADR-0008 — The vendor ban could not fail, and why the filter changes shape
+
+**Date:** 2026-09-29 · **Status:** accepted · **Supersedes:** ADR-0007 (third finding only)
+
+**Context.** ADR-0007 recorded a third defect and did not fix it: the negation filter runs on the
+file's own text as well as on the path, and the primary banned vendor name opens with the two
+letters the filter's first cue is built from. A line naming that vendor matched the filter and
+discarded itself. The ban was decorative — it could not fail on any line, at any path, even once
+the path half of the problem was solved.
+
+Measured on 2026-09-29 in a copy of this repo, with one tracked bait file whose entire content was
+a single line naming two banned vendors and carrying no prohibition: the gate exited **0**, printed
+`PASS no off-the-shelf SaaS backlog filler`, and invoking the scan function in that tree returned
+`0`. Two banned names, no finding.
+
+**Decision.** The filter stops reading the path, and the banned term is removed from the line
+before the filter reads the text. Two changes, both required — solving either one alone leaves the
+ban unable to fire.
+
+1. `-h` on both recursive scans, so the `./path:lineno:` prefix never enters the pipeline. The gate's
+   self-exclusion moves from a path grep to `--exclude='verify-seed.sh'`, which matches the
+   basename. The path is now absent rather than filtered, so no cue in a future directory name can
+   exempt a line.
+2. `sed -E "s%<pattern>%%gI"` between the match and the filter, so a cue inside the word being
+   banned cannot exempt that word. A cue about the line is a prohibition; a cue inside the term is
+   only a spelling.
+
+The single-file `count_affirmative` is deliberately untouched. It reads one file by name, so its
+output carries no path, and its one call site's pattern contains no cue. The credential scan is
+untouched for the reason ADR-0007 gives — it fails closed, and it never had this defect because it
+applies no filter at all.
+
+**Consequence.** Measured after the change, on the same bait: the gate exits **1** and reports one
+line referencing the banned vendors. On this repo it exits **0**. The legitimate prohibitions that
+name these vendors survive, because the filter still reads the prose around the term, which is what
+it was written to do. The change found one real hit on the way through, in the ADR above: prose
+naming a vendor with no prohibition on the same line, which is exactly what the ban is for. That
+line was reworded; the filter was not weakened to accommodate it.
+
+**Not fixed, on purpose.** The vendor pattern spells two vendors as bare names and three as
+domains, so a bare mention of the other three is not matched at all. Widening it is a separate
+change and wants its own evidence. The residual weakness of a cue-anywhere-on-the-line filter is
+also unchanged: a line carrying both a real breach and an unrelated prohibition is still missed.
+Both are recorded in issue #6.
+
+**Still open.** This lane's `verify-seed.sh` has now diverged from `221b` and `hansom-cab` twice
+over, and both carry this defect. Propagation stays deliberately unbundled: siblings are changed
+one at a time, after this change has been reviewed.
