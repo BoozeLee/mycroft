@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seed verify gate
+        run: bash scripts/verify-seed.sh
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: README links resolve
+        run: |
+          set -euo pipefail
+          missing=0
+          while read -r link; do
+            case "$link" in
+              http*|mailto:*) continue ;;
+            esac
+            path="${link%#*}"
+            [ -e "$path" ] || { echo "BROKEN: $link"; missing=1; }
+          done < <(grep -oE '\]\([^)#]+(#[^)]*)?\)' README.md | sed -E 's/^\]\(//; s/(#[^)]*)?\)$//')
+          exit "$missing"
+      - name: Core docs non-empty
+        run: |
+          set -euo pipefail
+          for f in README.md VISION.md AGENTS.md docs/BUILD-PLAN.md docs/DECISIONS.md docs/MONETIZATION.md; do
+            [ -s "$f" ] || { echo "EMPTY OR MISSING: $f"; exit 1; }
+          done
+      - name: Markdown hygiene
+        run: |
+          set -euo pipefail
+          if grep -rnE ' +$' --include='*.md' . --exclude-dir=.git; then
+            echo "trailing whitespace in markdown"; exit 1
+          fi
+          if grep -rnP '\t' --include='*.md' . --exclude-dir=.git; then
+            echo "tab characters in markdown"; exit 1
+          fi
