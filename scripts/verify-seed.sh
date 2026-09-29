@@ -42,7 +42,7 @@ count_affirmative_tree() {
   local pattern="$1"
   # -i matters: a banned vendor reintroduced as "Amplitude" or "Make.com" must still
   # fail, and a case-sensitive scan lets the capital-A spelling through.
-  grep -rInEi "$pattern" . --exclude-dir=.git 2>/dev/null \
+  grep -rInEi "$pattern" . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist 2>/dev/null \
     | grep -v '^\./scripts/verify-seed\.sh:' \
     | grep -viE "$negation" \
     | wc -l || true
@@ -132,12 +132,17 @@ fi
 
 # git grep only reads tracked files, so a credential in an untracked file used to
 # pass the gate. Scan the working tree instead.
+# This scan deliberately keeps full coverage of node_modules/ and dist/, unlike the
+# vendor and TODO scans below. A credential control should fail closed: skipping
+# those two directories would silently miss a real key, and that silent false
+# negative is worse than the false positive from a package's test fixtures. The
+# scan costs ~1s over 59MB, so coverage is not being bought with much.
 if grep -rIE '(sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,})' . --exclude-dir=.git >/dev/null 2>&1; then
   bad "credential-shaped strings in the working tree"
 else
   ok "no credential-shaped strings"
 fi
-todos=$(grep -rInE '\b(TODO|FIXME|XXX)\b' . --exclude-dir=.git 2>/dev/null | grep -v 'scripts/verify-seed\.sh' | grep -viE "$negation" | wc -l || true)
+todos=$(grep -rInE '\b(TODO|FIXME|XXX)\b' . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist 2>/dev/null | grep -v 'scripts/verify-seed\.sh' | grep -viE "$negation" | wc -l || true)
 if [[ "$todos" -eq 0 ]]; then ok "no TODO/FIXME markers"
 else bad "$todos TODO/FIXME markers (finish or file an issue)"; fi
 vendor=$(count_affirmative_tree 'notion\.so|amplitude|mixpanel|make\.com|zapier\.com')

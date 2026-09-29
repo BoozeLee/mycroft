@@ -136,3 +136,54 @@ that simulates its inputs, scores itself with arithmetic, or carries a hardcoded
 that cannot be faked — is unaffected in substance, and better protected in form. The first
 artefact this lane is allowed to claim is still `diagnostics/001-<company>.md`, and the gate
 still proves nothing about whether anyone will pay €3,500.
+
+**Superseded in part by ADR-0007** (2026-09-29): the byte-identity decision above no longer
+holds, by deliberate exception.
+
+## ADR-0007 — This lane's gate now diverges from the shared bytes, and why
+
+**Date:** 2026-09-29 · **Status:** accepted · **Supersedes:** ADR-0006 (byte identity only)
+
+**Context.** ADR-0006 made this lane's `scripts/verify-seed.sh` byte-identical to `221b` and
+`hansom-cab`. Testing that identity on 2026-09-29 found three things, and only the first is the
+one this ADR set out to fix.
+
+First, and real: `.gitignore` line 13 ignores `node_modules/`, while the untracked-file check
+reads `git ls-files --others --exclude-standard`, which honours `.gitignore`. A `node_modules/`
+tree is therefore invisible to it. Measured: with a populated `node_modules/` present, the gate
+reported `PASS no untracked files`. This is not hypothetical — `npm install` had been run in
+this repo, which is how the blind spot was found. `dist/` is not ignored, so the untracked
+check already catches that one.
+
+Second, the two content scans that look for our own prose do not in fact false-positive on that
+tree, for a reason nobody designed. Both apply a negation filter to the whole `grep` line, and
+a `grep` line is `./path:lineno:text`. The path `node_modules` contains the cue `no`, which the
+filter's `no|not|never|…` alternative matches, so every line under that directory is discarded
+before counting. Measured on planted bait: 6 raw matches, 0 after the filter.
+
+Third, and a pre-existing defect this change does not fix: the same filter runs on the file's
+own text, and `notion.so` begins with `no`. Measured: a top-level file reading `we track all
+usage in notion.so` produced 4 raw `grep` hits and the verdict `PASS no off-the-shelf SaaS
+backlog filler`. The ban's primary term cannot fire, and any path or term beginning with a
+negation cue is exempt the same way.
+
+**Decision.** The vendor scan and the unfinished-work scan gain
+`--exclude-dir=node_modules --exclude-dir=dist`. The credential scan deliberately does not,
+and a comment in the script records why. A credential control should fail closed: excluding
+those directories would silently miss a real key written there, and a silent false negative in
+a credential scan is a worse defect than a false positive a human dismisses after looking. It
+is also the one scan with no accidental exemption — measured, it did reach into `node_modules/`
+and catch a planted `AKIA…` string. It costs about 1s over 59MB, so the coverage is not
+expensive.
+
+**Consequence.** This lane's `verify-seed.sh` is no longer the same bytes as `221b` and
+`hansom-cab`, and a byte check across the three will now fail on purpose. The `.gitignore`
+blind spot exists in all three lanes, so this is a real fix currently applied to one.
+Propagation is a follow-up and is deliberately not bundled: siblings are changed one at a
+time, after this change has been reviewed.
+
+Both defects are recorded rather than fixed here. The accidental `node_modules` exemption is
+now explicit and no longer depends on a regex coincidence, which is the part this change
+actually buys. The self-exempting `notion.so` term is a separate change to the filter's
+semantics and needs its own decision; until then the vendor ban's primary term is decorative,
+in this lane and in both siblings.
