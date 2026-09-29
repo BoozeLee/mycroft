@@ -120,17 +120,56 @@ fi
 
 echo
 echo "-- hygiene"
-if git grep -nIE '(sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,})' -- . >/dev/null 2>&1; then
-  bad "credential-shaped strings in tracked files"
+# A file outside version control is a floor the gate cannot see: a green run would
+# describe the committed plan while an unreviewed script sat beside it printing its
+# own verdict. Nothing untracked is allowed to exist, so nothing can hide there.
+untracked=$(git ls-files --others --exclude-standard 2>/dev/null | tr '\n' ' ')
+if [[ -z "${untracked// /}" ]]; then
+  ok "no untracked files"
+else
+  bad "untracked files outside version control: $untracked"
+fi
+
+# git grep only reads tracked files, so a credential in an untracked file used to
+# pass the gate. Scan the working tree instead.
+if grep -rIE '(sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,})' . --exclude-dir=.git >/dev/null 2>&1; then
+  bad "credential-shaped strings in the working tree"
 else
   ok "no credential-shaped strings"
 fi
-todos=$(git grep -nIE '\b(TODO|FIXME|XXX)\b' -- . 2>/dev/null | grep -v 'scripts/verify-seed.sh' | grep -viE "$negation" | wc -l || true)
+todos=$(grep -rInE '\b(TODO|FIXME|XXX)\b' . --exclude-dir=.git 2>/dev/null | grep -v 'scripts/verify-seed\.sh' | grep -viE "$negation" | wc -l || true)
 if [[ "$todos" -eq 0 ]]; then ok "no TODO/FIXME markers"
 else bad "$todos TODO/FIXME markers (finish or file an issue)"; fi
 vendor=$(count_affirmative_tree 'notion\.so|amplitude|mixpanel|make\.com|zapier\.com')
 if [[ "$vendor" -eq 0 ]]; then ok "no off-the-shelf SaaS backlog filler"
 else bad "$vendor lines reference Notion/Amplitude/Mixpanel/Make/Zapier"; fi
+
+echo
+echo "-- verify scripts are instruments, not actors"
+# A verify script that invents its recipients, counts its own successes with a
+# modulo loop, or describes itself as a simulation is not measuring anything. It
+# is the shape found in hansom-cab on 2026-09-29: a script that reported sponsor
+# interest it had never asked anyone for. Real evidence is read from a real log.
+vscripts=()
+for f in scripts/verify-*.sh; do [[ -f "$f" ]] && vscripts+=("$f"); done
+if [[ "${#vscripts[@]}" -eq 0 ]]; then
+  ok "no verify scripts written yet (expected at seed depth)"
+else
+  fakes=()
+  for f in "${vscripts[@]}"; do
+    [[ "$f" == "scripts/verify-seed.sh" ]] && continue
+    if grep -qiE 'simulat' "$f" \
+       || grep -qE '\$\(\([^)]*%[[:space:]]*[0-9]' "$f" \
+       || grep -qE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' "$f"; then
+      fakes+=("$f")
+    fi
+  done
+  if [[ "${#fakes[@]}" -eq 0 ]]; then
+    ok "${#vscripts[@]} verify script(s) present, none fabricate their own evidence"
+  else
+    bad "verify script(s) fabricate their own evidence: ${fakes[*]}"
+  fi
+fi
 
 echo
 if [[ "$fail" -eq 0 ]]; then

@@ -117,3 +117,22 @@ proves nothing about demand, and `README.md` says so in those words so nobody ca
 green gate as validation. The first runnable artefact this lane is allowed to claim is
 `diagnostics/001-<company>.md` in Phase 1 — a real diagnostic on a real company, which is
 Phase 1's acceptance criterion and not a later phase's.
+
+## ADR-0006 — This lane's copy of the gate was hardened, and why
+
+**Date:** 2026-09-29 · **Status:** accepted
+
+**Context.** The shared `scripts/verify-seed.sh` had two blind spots, found in a sibling lane
+(`hansom-cab`) and negative-tested there: the credential and TODO checks did not read untracked
+files, because they used `git grep`, and the gate never opened the verify scripts it pointed
+at, so a script that fabricated its own evidence left the gate green. Both are recorded in
+`221b` ADR-0005 and in `hansom-cab/docs/QUARANTINE-2026-09-29.md`.
+
+**Decision.** This lane's copy is updated to the same bytes as `221b` and `hansom-cab`. The
+gate now fails on untracked files, scans the working tree, and fails on a `scripts/verify-*.sh`
+that simulates its inputs, scores itself with arithmetic, or carries a hardcoded address book.
+
+**Consequence.** Phase 1 of this lane — a real diagnostic on a real company, the only phase
+that cannot be faked — is unaffected in substance, and better protected in form. The first
+artefact this lane is allowed to claim is still `diagnostics/001-<company>.md`, and the gate
+still proves nothing about whether anyone will pay €3,500.
