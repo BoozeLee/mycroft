@@ -343,3 +343,59 @@ that was actually happening. On the phase 5 gate that limit is sharper still: a 
 be typed in under a minute, so the only real evidence that a second person delivered an engagement
 is that the founder did not write the record. The gate says so in its own output, and instructs
 the reader to ask the deliverer.
+
+## ADR-0011 — A simulated diagnostic, and the model-building premise it failed to meet
+
+**Date:** 2026-09-29 · **Status:** accepted
+
+**Context.** Phases 1 and 2 needed a company. The owner works somewhere they are not willing to
+put under this lane without their employer's permission, so that path is closed — not for this
+week, ever. The remaining option was a simulated business: the owner's own AI development
+organisation, treated as a going concern, answered through a locally persisted model, and
+carried through the real instrument rather than described in prose.
+
+The ask behind it was that the twelve intake questions be answered by a model "tweaked for
+perfection according to the task at hand". That premise is the part of this that failed, and it
+is recorded first because the rest of the work succeeded anyway.
+
+**What was measured.** Weight updates were never available: the 4-bit libraries that would make
+them fit are absent for this CUDA build, and a full-precision update to a 7B needs roughly twice
+the 6.4 GiB the card has free. So the substitute was a persisted model with a persona baked into
+its system message, chosen by scoring five candidates on the four questions whose answers the
+business's own record can contradict. The result:
+
+| arm | best-sample score | fabrications across all samples | self-agreement over five samples |
+|---|---|---|---|
+| persona, no dossier | 12 of 12 | 1 in 20 | 0.20 |
+| persona plus dossier | 10 of 12 | 4 in 20 | 0.35 |
+| no persona, no dossier | 10 of 12 | 1 in 20 | 0.25 |
+
+Three things follow, and only the first is flattering. The 12 of 12 is the top of a lottery:
+agreement across five samples is 0.2, so taking the best sample is close to calling the luckiest
+one quality. And **adding the dossier made the model invent facts four times more often** — a
+confident register reads as a form to complete rather than evidence to check. Third, the dossier's
+best answer to "which of these touch a customer" was "none, they are all internal or not built",
+which is false, because the advisory offer and the repository-access product are both outward
+facing with no users yet. That is precisely the error this lane exists to catch: a true fact about
+something narrower than the question, used to answer the wider question. The dossier helps the
+analyst and not the respondent, so it stays on the analyst's side of the table.
+
+**One defect in the measurement itself.** The first scorer kept the best of five samples, which
+discarded the dishonest ones and made the dossier look like a clear improvement. That is the same
+defect as ADR-0010 — a measurement that forgives the failure it exists to detect — and it was
+caught only by counting every sample instead of the best one. Both scorers were wrong before they
+were right, and the record is here so a later reader does not assume the first pass was fine.
+
+**Decision.** Keep the simulation, in the private toolkit, under a directory that is not the one
+real diagnostics use. The gate now fails if any file in the real namespace declares itself
+simulated, because a simulated engagement filed as a real one is the same fabrication this repo
+has now refused twice. The instrument was exercised end to end on non-template content for the
+first time, and the page-one disclaimer appeared exactly once in the rendered report, which is a
+small thing that had only ever been asserted before.
+
+**Consequence.** Phases 1 and 2 are still not done and kill criteria K0 and K1 are still live. K0
+becomes decidable on 2026-10-20; if no real company has been run by then the lane closes, and this
+simulation does not move that date. What the work bought is rehearsal, instrument evidence, and
+one dated finding worth more than the rehearsal: a model given a good dossier about a business
+will still answer a narrower question than it was asked, and the failure mode does not announce
+itself.
