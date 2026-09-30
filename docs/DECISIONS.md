@@ -399,3 +399,111 @@ simulation does not move that date. What the work bought is rehearsal, instrumen
 one dated finding worth more than the rehearsal: a model given a good dossier about a business
 will still answer a narrower question than it was asked, and the failure mode does not announce
 itself.
+
+---
+
+## ADR-0012 — K0 had no antecedent, and the obvious way to close it was a mistake
+
+**Date:** 2026-09-30
+**Status:** accepted
+**Supersedes:** ADR-0009 (the definition of K0 only)
+
+### Context
+
+K0 reads: *"The unpaid Phase 1 diagnostic changed `diagnostics/method.md` not at all | week 3
+| The method is a template, not a method."* Its trigger **presupposes that a Phase 1 diagnostic
+exists.** Nothing in the plan says what happens when it does not.
+
+Measured on 2026-09-30, no such diagnostic can exist:
+
+- The founder has ruled out the company they work at, in their own words, and asked that it
+  never be proposed again.
+- A large Belgian brewing group was suggested and rejected on size. The vision targets
+  mid-sized companies, and the rejection was correct.
+- The founder then asked to skip the real-company path and to rehearse on a simulated
+  business instead. That rehearsal is built (ADR-0011) and is deliberately not a Phase 1
+  subject.
+
+So on **2026-10-20** the criterion is **vacuous**: with no Phase 1 diagnostic, K0 can neither
+pass nor formally fire, and the lane's only written decision procedure is unreachable. That is a
+defect in the plan, not a failure of discipline. A criterion that cannot be evaluated is
+indistinguishable from a criterion that was forgotten.
+
+### What was measured
+
+**The method's standing, judged honestly.** Asked to place the current evidence on a five-level
+scale, the answer was *Weak* — unanimous, confidence 1.0 — defined as: exercised end to end on
+generated content only, which proved the instrument works and not the method. That is the
+correct reading and it is recorded here so a later reader does not have to reconstruct it.
+
+**Three questions were put to an independent judge** (`jev-latest`) with the full state, the
+verbatim criterion text, and the constraints: | question | verdict | confidence |
+|---|---|---|
+| Amend Phase 1's "already funded" to include engineering time, so the founder's own organisation could be the subject? | **do not amend** (0.99) | **0.98** |
+| What should the lane do in the 20 days before K0 is decidable? | **pre-qualify the subject, then let K0 fire on its merits** (0.94) | 0.92 |
+| How should the missing antecedent be fixed? | *not sure* — split 0.51, fires-regardless 0.49, leave-unchanged 0.00 | **0.26** |
+
+### The option that was available and rejected
+
+The only way to close K0 on disk within the deadline was to run the diagnostic on the founder's
+own organisation, which is a real business with real commitments and no revenue. That route
+required amending Phase 1's acceptance criterion from "already funded" to "funded or committed
+engineering time".
+
+**It was rejected, at 0.99.** Two reasons, and the second is the one that matters:
+
+1. Amending an acceptance criterion so that a gate can pass is the same move this lane has
+   already caught in six verify scripts and one measurement.
+2. The analyst would be grading their own kill list, on their own company, using a method they
+   wrote. The criterion exists to test whether the method can tell a busy founder they are
+   wrong. Self-analysis cannot fail that test, so it is not a weak version of the test. It is
+   not the test.
+
+`docs/BUILD-PLAN.md` Phase 1's acceptance criterion is therefore **unchanged**.
+
+### The option considered and rejected for a different reason
+
+The other repair was to make K0 fire on its date whether or not a diagnostic exists, treating
+"no real company was reachable" as the same finding as K1 arriving three months early. Rejected:
+that replaces the only criterion in the table that tests **the method** with one that tests
+**reachability**, which is K1's job, and it would record a fault against the method for a fact
+about the market.
+
+### Decision
+
+**K0 is split into two criteria, both decidable on 2026-10-20.**
+
+- **K0a — a real subject was reached.** Did one real company the founder does not work for, and
+  has no financial interest in, agree to the intake by week 3?
+- **K0b — the method changed.** Given K0a, does `diagnostics/method.md` carry a dated revision
+  produced by that engagement?
+
+The split was chosen over the alternative at the judge's low confidence (0.26, and near-even
+between the two live options) because it is **additive**: the original test survives intact and
+the missing antecedent is supplied separately. Every branch now produces a decision — no
+subject means a reachability finding, a subject with no method change means the original
+finding.
+
+**Independence is enforced mechanically, not remembered.** A real diagnostic must carry
+`subject_independence: external` in its frontmatter, and the private gate fails if that field is
+absent or holds any other value. A simulated diagnostic already fails in the real namespace
+(ADR-0011). Together these make self-analysis unreachable without amending anything.
+
+**The subject search gets a pre-qualification and a dated checkpoint** rather than an open
+request. `docs/FIRST-SUBJECT.md` carries five screening questions so a candidate can be tested
+in ten minutes without spending a real contact, and **2026-10-13** is the last call: if no
+candidate has passed the screen by then, the remaining week goes to the decision rather than to
+the search.
+
+### Consequence
+
+On 2026-10-20 with no qualifying subject, the gate goes **red naming K0a**, which is the
+decision this lane needed to have and did not have. Phase 1 and K0b stay open. The acceptance
+criterion is untouched. The lane can no longer reach its own deadline in a state where nothing
+is decided.
+
+### Not in scope
+
+Closing the lane. Widening beyond the target geography. Any change to the price, the offer, or
+the six sections. Whether the answer to this lane is a company or a practice is a decision for
+K6 in month 12, and `VISION.md` already records that a practice is a legitimate outcome.

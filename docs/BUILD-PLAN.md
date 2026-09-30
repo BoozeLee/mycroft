@@ -39,13 +39,23 @@ network contact. Not a friend being polite: someone who will answer a blunt ques
 their AI budget. Run the full diagnostic on them, unpaid, and write down everything that was
 awkward.
 
+**The subject must be external, and that is a constraint on the subject rather than on the
+work.** The company cannot be one the founder works for, one they hold a financial interest
+in, or one they are on the point of being employed by. A subject the founder has a stake in
+turns the kill list into a self-assessment, and a self-assessment cannot fail the test the
+kill list exists to run. A simulated or model-answered subject is not a subject at all, and
+the private gate refuses both. The acceptance criterion below is deliberately **not** amended
+to make this phase reachable (ADR-0012), because a criterion rewritten so that a gate can pass
+is the failure this lane has already caught in its own scripts.
+
 Deliverables:
 - `diagnostics/intake.md` — the questions asked before any analysis. Twelve questions,
   written so a non-technical founder answers them in under an hour.
 - `diagnostics/method.md` — the diagnostic in order: intent inventory → obligation map →
   provider/data map → MVA candidates → kill list → obligation calendar.
 - `diagnostics/001-<company>.md` — the first real diagnostic, kept even though it is unpaid,
-  because it is the reference implementation of the method.
+  because it is the reference implementation of the method. Carries
+  `subject_independence: external` in its frontmatter, and the private gate fails without it.
 
 The point of running it unpaid is that the method cannot survive its first contact with a
 real business otherwise. Every section that turns out to be unnecessary gets cut here, and

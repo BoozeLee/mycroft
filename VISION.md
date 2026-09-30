@@ -76,7 +76,8 @@ enforced.
 
 | # | Signal | Deadline | Action |
 |---|---|---|---|
-| K0 | The unpaid Phase 1 diagnostic changed `diagnostics/method.md` not at all | week 3 | The method is a template, not a method. Write down what the first real business actually changed, or close the lane. Do not carry it forward unchanged and call it experience. |
+| K0a | No real company the founder does not work for, and has no financial interest in, had agreed to the intake by week 3 | week 3 | Nothing was asked of a stranger. The problem is either not real or not reachable by one person with this method. Do not lower the bar on who counts as a subject. Close the outreach and let K1 decide. |
+| K0b | The unpaid Phase 1 diagnostic changed `diagnostics/method.md` not at all | week 3 | The method is a template, not a method. Write down what the first real business actually changed, or close the lane. Do not carry it forward unchanged and call it experience. Decided only if K0a passed. |
 | K1 | Zero paid engagements after 3 qualified conversations | week 8 | Stop. The problem is not real or the buyer is not reachable. Do not lower the price to find out. |
 | K2 | Engagements are bought as implementation, not as diagnosis | any 2 consecutive | Narrow the offer. Add a written "we do not build it" clause. If it still happens, the buyer wants a contractor and this lane is wrong. |
 | K3 | Time-to-deliver exceeds 10 working days more than twice | by engagement 5 | The scope is wrong. Cut scope; never extend the timeline. |
@@ -84,9 +85,11 @@ enforced.
 | K5 | Fewer than 2 engagements in a calendar quarter after H2 | quarter 7 | Convert to a content-and-referrals lane. Stop the delivery capability. |
 | K6 | The founder is the only person who can deliver the method | month 12 | H2 has failed. The method was never written down. Rewrite it or close the lane. |
 
-K0, K1, and K6 are the three that will actually fire. Everything else is a guardrail. K0
-fires first and fires soonest, because it is the only one that can be decided without a
-single client conversation.
+K0a, K0b, K1, and K6 are the four that will actually fire. Everything else is a guardrail. K0a
+and K0b fire first and fire soonest, because they are the only two that can be decided without
+a single client conversation. K0 was one criterion with no antecedent: it presupposed a
+diagnostic that no available subject could produce, so on its original date it could neither
+pass nor fire (ADR-0012).
 
 ## What would make this a bad bet
 
