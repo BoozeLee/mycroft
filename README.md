@@ -1,4 +1,6 @@
-> **Development home:** https://github.com/BoozeLee/mycroft — public, CI-enabled (seed verify gate + docs checks on every push/PR). This org copy is the private archive.
+> **Development home:** https://github.com/BoozeLee/mycroft — public and CI-enabled, with
+> seed verification and documentation checks on every push and pull request. Client material,
+> engagement records, and private working notes are not stored in this repository.
 
 # Mycroft
 
